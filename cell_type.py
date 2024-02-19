@@ -29,11 +29,9 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
 
     def __init__(cls, self, pos):
         self.cell_body = CellBody(pos, cls.seed_radius)
-        
-        self.seed_vol = 4.0/3.0 * np.pi * cls.seed_radius**3
-        self.current_vol = self.seed_vol
         self.cyc_len = self.get_cyc_len()
         self.g1_len = self.get_g1_len()
+        self.growth_rate = self.get_growth_rate()
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.current_age = 0
@@ -46,6 +44,11 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
         mean = self.cyc_len / 2.0
         return int(np.random.normal(loc=mean, scale=mean/10.0, size=1))
     
+    def get_growth_rate(cls, self):
+        # radius growth rate required to double volume in G1
+        # cube root of 2 = 1.259921
+        return 1.259921 * cls.seed_radius / self.g1_len
+
     @abstractmethod
     def do_cell_cycle(self):
         pass
@@ -105,8 +108,7 @@ class GenericCell(AbstractCellType):
     def g1_phase(self):
         self.current_cyc_iteration += 1
         
-        self.current_vol += self.seed_vol / self.g1_len
-        self.cell_body.change_vol(self.current_vol)
+        self.cell_body.grow_radii(self.growth_rate)
         
         if self.current_cyc_iteration == self.g1_len:
             if self.cell_body.get_substance_level("oxygen") < self.g0_oxy_threshold or self.cell_body.is_contact_inhibited():
@@ -132,12 +134,13 @@ class GenericCell(AbstractCellType):
     def g2_phase(self):
         pass
 
-    def m_phase(self):
-        self.cell_body.change_volume(self.seed_vol)
+    def m_phase(cls, self):
+        self.cell_body.set_radius(cls.seed_radius)
         # !!!! seed new cell where there is space
         self.current_cyc_iteration = 0
         self.cyc_len = self.get_cyc_len()
         self.g1_len = self.get_g1_len()
+        self.growth_rate = self.get_growth_rate()
         if self.does_age:
             self.current_age += 1
         if self.current_age > self.lifespan:
