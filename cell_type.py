@@ -27,7 +27,8 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     does_age: bool
     lifespan: int
 
-    def __init__(cls, self, pos):
+    def __init__(cls, self, id, pos):
+        self.id = id
         self.cell_body = CellBody(pos, cls.seed_radius)
         self.cyc_len = self.get_cyc_len()
         self.g1_len = self.get_g1_len()
@@ -48,6 +49,11 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
         # radius growth rate required to double volume in G1
         # cube root of 2 = 1.259921
         return 1.259921 * cls.seed_radius / self.g1_len
+
+    @abstractmethod
+    @property
+    def min_radius(self):
+        pass
 
     @abstractmethod
     def do_cell_cycle(self):
@@ -95,6 +101,10 @@ class GenericCell(AbstractCellType):
     def __init__(self):
         super().__init__()
 
+    @property
+    def min_radius(self):
+        return self.cell_body.rounded_radius / 2.0
+    
     def do_cell_cycle(self):
         if self.current_phase == "G0":
             self.g0_phase()
