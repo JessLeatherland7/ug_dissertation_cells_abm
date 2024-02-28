@@ -26,12 +26,13 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     def __init__(cls, self, id, pos):
         self.id = id
         self.cell_body = CellBody(pos, cls.seed_radius)
-        self.cyc_len = self.get_cyc_len()
-        self.g1_len = self.get_g1_len()
-        self.growth_rate = self.get_growth_rate()
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.is_dead = False
+
+        self.cyc_len = self.get_cyc_len()
+        self.g1_len = self.get_g1_len()
+        self.growth_rate = self.get_growth_rate()
 
     def get_cyc_len(cls, self):
         return int(np.random.normal(loc=cls.mean_cyc_len, scale=cls.std_dev_cyc_len, size=1))
