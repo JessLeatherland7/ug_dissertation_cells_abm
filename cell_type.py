@@ -151,6 +151,7 @@ class GenericCell(AbstractCellType):
             self.is_dead = True
         else:
             self.current_cyc_iteration = 0
+            self.current_phase = "G1"
             self.cyc_len = self.get_cyc_len()
             self.g1_len = self.get_g1_len()
             self.growth_rate = self.get_growth_rate()
