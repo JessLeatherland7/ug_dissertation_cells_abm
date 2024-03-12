@@ -5,9 +5,9 @@ from cell_body import CellBody
 
 class CellTypeAttributesMeta(ABCMeta):
     cell_type_attributes = [
-        'seed_radius', 
-        'mean_cyc_len', 
-        'std_dev_cyc_len'
+        'SEED_RADIUS', 
+        'MEAN_CYC_LEN', 
+        'STD_DEV_CYC_LEN'
     ]
 
     def __call__(cls, *args, **kwargs):
@@ -19,13 +19,13 @@ class CellTypeAttributesMeta(ABCMeta):
     
 
 class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
-    seed_radius: float
-    mean_cyc_len: float
-    std_dev_cyc_len: float
+    SEED_RADIUS: float
+    MEAN_CYC_LEN: float
+    STD_DEV_CYC_LEN: float
 
-    def __init__(cls, self, id, pos):
+    def __init__(self, id, pos):
         self.id = id
-        self.cell_body = CellBody(pos, cls.seed_radius)
+        self.cell_body = CellBody(pos, self.SEED_RADIUS)
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.is_dead = False
@@ -34,17 +34,17 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
         self.g1_len = self.get_g1_len()
         self.growth_rate = self.get_growth_rate()
 
-    def get_cyc_len(cls, self):
-        return int(np.random.normal(loc=cls.mean_cyc_len, scale=cls.std_dev_cyc_len, size=1))
+    def get_cyc_len(self):
+        return int(np.random.normal(loc=self.MEAN_CYC_LEN, scale=self.STD_DEV_CYC_LEN, size=1))
     
     def get_g1_len(self):
         g1_len_mean = self.cyc_len / 2.0
         return int(np.random.normal(loc=g1_len_mean, scale=g1_len_mean/10.0, size=1))
     
-    def get_growth_rate(cls, self):
+    def get_growth_rate(self):
         # radius growth rate required to double volume in G1
         # cube root of 2 = 1.259921
-        return 1.259921 * cls.seed_radius / self.g1_len
+        return ((1.259921 * self.SEED_RADIUS) - self.SEED_RADIUS) / self.g1_len
 
     def do_cell_cycle(self):
         if self.current_phase == "G0":
@@ -88,21 +88,17 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
 
 
 class GenericCell(AbstractCellType):
-    seed_radius = 10.0
-    mean_cyc_len = 24.0
-    std_dev_cyc_len = 1.0
+    SEED_RADIUS = 10.0
+    MEAN_CYC_LEN = 24.0
+    STD_DEV_CYC_LEN = 1.0
     
-    lifespan = 40
-    g0_oxy_threshold = 0.5
-    hypoxia_theshold = 0.25
+    LIFESPAN = 40
+    G0_OXY_THRESHOLD = 0.5
+    HYPOXIA_THRESHOLD = 0.25
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, id, pos):
+        super().__init__(id, pos)
         self.current_age = 0
-
-    @property
-    def min_radius(self):
-        return self.cell_body.rounded_radius / 2.0
     
     def do_cell_cycle(self):
         if self.current_phase == "G0":
@@ -120,13 +116,13 @@ class GenericCell(AbstractCellType):
         self.cell_body.grow_radius(self.growth_rate)
         
         if self.current_cyc_iteration == self.g1_len:
-            if self.cell_body.get_substance_level("oxygen") < self.g0_oxy_threshold or self.cell_body.contact_inhibited():
+            if self.cell_body.get_substance_level("oxygen") < self.G0_OXY_THRESHOLD or self.cell_body.contact_inhibited:
                 self.current_phase = "G0"
             else:
                 self.current_phase = "S"
 
     def g0_phase(self):
-        if not self.cell_body.contact_inhibited() and self.cell_body.get_substance_level("oxygen") > self.g0_oxy_threshold:
+        if not self.cell_body.contact_inhibited and self.cell_body.get_substance_level("oxygen") > self.G0_OXY_THRESHOLD:
             if self.current_cyc_iteration == self.g1_len:
                 self.current_phase = "S"
             else:
@@ -135,7 +131,7 @@ class GenericCell(AbstractCellType):
     def s_phase(self):
         self.current_cyc_iteration += 1
         if self.current_cyc_iteration == self.cyc_len - 1:
-            if self.cell_body.get_substance_level("oxygen") < self.g0_oxy_threshold or self.cell_body.contact_inhibited:
+            if self.cell_body.get_substance_level("oxygen") < self.G0_OXY_THRESHOLD or self.cell_body.contact_inhibited:
                 self.current_phase = "G0"
             else:
                 self.current_phase = "M"
@@ -143,11 +139,11 @@ class GenericCell(AbstractCellType):
     def g2_phase(self):
         pass
 
-    def m_phase(cls, self):
-        self.cell_body.set_radius(cls.seed_radius)
+    def m_phase(self):
+        self.cell_body.set_radius(self.SEED_RADIUS)
         # !!!! seed new cell where there is space
         self.current_age += 1
-        if self.current_age > cls.lifespan:
+        if self.current_age > self.LIFESPAN:
             self.is_dead = True
         else:
             self.current_cyc_iteration = 0
@@ -157,8 +153,10 @@ class GenericCell(AbstractCellType):
             self.growth_rate = self.get_growth_rate()
         
     def migrate(self):
-        pass
+        direction = np.random.uniform(-1, 1, [3])
+        vel = (direction / np.linalg.norm(direction)) * (self.SEED_RADIUS / 2.0)
+        self.cell_body.apply_vel(vel)
 
     def type_specific_processes(self):
-        if self.cell_body.get_substance_level("oxygen") < self.hypoxia_theshold:
+        if self.cell_body.get_substance_level("oxygen") < self.HYPOXIA_THRESHOLD:
             self.is_dead = True
