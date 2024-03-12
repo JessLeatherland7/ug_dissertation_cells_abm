@@ -4,18 +4,20 @@ from visualiser import Visualiser
 
 data_writer = DataWriter("sim_data.csv")
 
-initial_cell_num = 4
+initial_cell_num = 100
 cells = []
 
 #x_pos = [-40.0, -20.0, 0.0, 20.0, 40.0, -40.0, -20.0, 0.0, 20.0, 40.0]
 #x_pos = [-37.5, -12.5, 12.5, 37.5]
 #y_pos = [-10.0, -10.0, -10.0, -10.0, -10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
+env_size = 500
+
 for i in range(initial_cell_num):
-    pos = np.random.uniform(-20,20,[3])
+    pos = np.random.uniform(20,env_size * 0.9,[3])
     cells.append(GenericCell(id=i, pos=pos))
 
-max_iteration = 30
+max_iteration = 50
 
 sim_iteration = 0
 data_writer.save_iteration(sim_iteration, cells)
@@ -37,5 +39,5 @@ while sim_iteration <= max_iteration:
 
 data_writer.write_data()
 
-visualiser = Visualiser("sim_data.csv", max_iteration)
+visualiser = Visualiser("sim_data.csv", max_iteration, env_size)
 visualiser.visualise()

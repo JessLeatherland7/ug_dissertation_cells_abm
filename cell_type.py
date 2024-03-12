@@ -43,8 +43,8 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     
     def get_growth_rate(self):
         # radius growth rate required to double volume in G1
-        # cube root of 2 = 1.259921
-        return ((1.259921 * self.SEED_RADIUS) - self.SEED_RADIUS) / self.g1_len
+        cube_root_2 = 1.259921
+        return ((cube_root_2 * self.SEED_RADIUS) - self.SEED_RADIUS) / self.g1_len
 
     def do_cell_cycle(self):
         if self.current_phase == "G0":
@@ -92,7 +92,7 @@ class GenericCell(AbstractCellType):
     MEAN_CYC_LEN = 24.0
     STD_DEV_CYC_LEN = 1.0
     
-    LIFESPAN = 40
+    LIFESPAN = 3
     G0_OXY_THRESHOLD = 0.5
     HYPOXIA_THRESHOLD = 0.25
 
@@ -143,7 +143,7 @@ class GenericCell(AbstractCellType):
         self.cell_body.set_radius(self.SEED_RADIUS)
         # !!!! seed new cell where there is space
         self.current_age += 1
-        if self.current_age > self.LIFESPAN:
+        if self.current_age >= self.LIFESPAN:
             self.is_dead = True
         else:
             self.current_cyc_iteration = 0
