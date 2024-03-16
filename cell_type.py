@@ -153,9 +153,10 @@ class GenericCell(AbstractCellType):
             self.growth_rate = self.get_growth_rate()
         
     def migrate(self):
-        direction = np.random.uniform(-1, 1, [3])
-        vel = (direction / np.linalg.norm(direction)) * (self.SEED_RADIUS / 2.0)
-        self.cell_body.apply_vel(vel)
+        if not self.cell_body.contact_inhibited:
+            direction = np.random.uniform(-1, 1, [3])
+            vel = (direction / np.linalg.norm(direction)) * (self.SEED_RADIUS / 2.0)
+            self.cell_body.apply_vel(vel)
 
     def type_specific_processes(self):
         if self.cell_body.get_substance_level("oxygen") < self.HYPOXIA_THRESHOLD:

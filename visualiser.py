@@ -3,6 +3,7 @@ from pygame.locals import *
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.GLUT import *
 
 import math
 
@@ -10,7 +11,7 @@ from data import DataReader
 
 class Visualiser:
     
-    cell_colours = {"GenericCell": (0.5, 0.2, 0.2), "Quiescent": (0.6, 0.6, 0.2)}
+    cell_colours = {"GenericCell": {"Normal": (0.6, 0.2, 0.2), "Quiescent": (0.8, 0.5, 0.5)}}
     
     # define 12 edges for the environment border
     env_edges = (
@@ -63,9 +64,9 @@ class Visualiser:
                 positions.append(cell["pos"])
                 radii.append(cell["radius"])
                 if cell["current_phase"] == "G0":
-                    colours.append(self.cell_colours["Quiescent"])
+                    colours.append(self.cell_colours[cell["cell_type"]]["Quiescent"])
                 else:
-                    colours.append(self.cell_colours[cell["cell_type"]])
+                    colours.append(self.cell_colours[cell["cell_type"]]["Normal"])
         
         return positions, radii, colours
     
@@ -76,8 +77,8 @@ class Visualiser:
         glBegin(GL_LINES)
         glColor4f(0.4, 0.4, 0.4, 1)
         for edge in self.env_edges:
-            for index in edge:
-                glVertex3fv(self.env_vertices[index])
+            for vertex in edge:
+                glVertex3fv(self.env_vertices[vertex])
         glEnd()
 
 
@@ -118,7 +119,7 @@ class Visualiser:
 
         glEnable(GL_LIGHTING)
 
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.9, 0.9, 0.9, 1.0])
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.8, 0.8, 0.8, 1.0])
 
         # Enable light number 0
         glEnable(GL_LIGHT0)

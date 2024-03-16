@@ -4,14 +4,14 @@ from visualiser import Visualiser
 
 data_writer = DataWriter("sim_data.csv")
 
-initial_cell_num = 100
+initial_cell_num = 10
 cells = []
 
 #x_pos = [-40.0, -20.0, 0.0, 20.0, 40.0, -40.0, -20.0, 0.0, 20.0, 40.0]
 #x_pos = [-37.5, -12.5, 12.5, 37.5]
 #y_pos = [-10.0, -10.0, -10.0, -10.0, -10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
-env_size = 500
+env_size = 200
 
 for i in range(initial_cell_num):
     pos = np.random.uniform(20,env_size * 0.9,[3])

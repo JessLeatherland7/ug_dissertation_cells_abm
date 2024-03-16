@@ -18,4 +18,4 @@ class CellBody:
 
     def get_substance_level(self, substance):
         # !!!! implement
-        return 1
+        return 0.4
