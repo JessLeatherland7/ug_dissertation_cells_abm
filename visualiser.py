@@ -63,7 +63,8 @@ class Visualiser:
             if not cell["is_dead"]:
                 positions.append(cell["pos"])
                 radii.append(cell["radius"])
-                if cell["current_phase"] == "G0":
+                #if cell["current_phase"] == "G0":
+                if cell["contact_inhibited"]:
                     colours.append(self.cell_colours[cell["cell_type"]]["Quiescent"])
                 else:
                     colours.append(self.cell_colours[cell["cell_type"]]["Normal"])

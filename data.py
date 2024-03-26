@@ -8,7 +8,7 @@ class DataWriter:
 
     def save_iteration(self, iteration_num, cells):
         for cell in cells:
-            self.data += f"{iteration_num}\t{cell.id}\t{cell.is_dead}\t{type(cell).__name__}\t{cell.current_phase}\t{(cell.cell_body.pos.tolist())}\t{cell.cell_body.radius}\n"
+            self.data += f"{iteration_num}\t{cell.id}\t{cell.is_dead}\t{type(cell).__name__}\t{cell.current_phase}\t{(cell.cell_body.pos.tolist())}\t{cell.cell_body.radius}\t{cell.cell_body.contact_inhibited}\n"
 
     def write_data(self):
         with open(self.output_file, "w") as f:
@@ -29,7 +29,7 @@ class DataReader:
         for row in csvreader:
             iteration = int(row[0])
             cell_dict = {"id": int(row[1]), "is_dead": row[2] == "True", "cell_type": row[3], 
-                         "current_phase": row[4], "pos": eval(row[5]), "radius": float(row[6])}
+                         "current_phase": row[4], "pos": eval(row[5]), "radius": float(row[6]), "contact_inhibited": row[7] == "True"}
             if iteration in self.data:
                 self.data[iteration].append(cell_dict)
             else:
