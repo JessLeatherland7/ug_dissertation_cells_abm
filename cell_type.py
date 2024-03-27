@@ -23,9 +23,9 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     MEAN_CYC_LEN: float
     STD_DEV_CYC_LEN: float
 
-    def __init__(self, id, pos):
+    def __init__(self, id, pos, env_size):
         self.id = id
-        self.cell_body = CellBody(pos, self.SEED_RADIUS)
+        self.cell_body = CellBody(pos, self.SEED_RADIUS, env_size)
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.is_dead = False
@@ -96,8 +96,8 @@ class GenericCell(AbstractCellType):
     G0_OXY_THRESHOLD = 0.5
     HYPOXIA_THRESHOLD = 0.25
 
-    def __init__(self, id, pos):
-        super().__init__(id, pos)
+    def __init__(self, id, pos, env_size):
+        super().__init__(id, pos, env_size)
         self.current_age = 0
     
     def do_cell_cycle(self):

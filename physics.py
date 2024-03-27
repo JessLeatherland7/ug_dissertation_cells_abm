@@ -31,7 +31,6 @@ class PhysicalModel:
     def is_cell_contact_inhibited(self, cells):
         pass
 
-
     def solve_overlap(self, cells):
         pass
 

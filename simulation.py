@@ -5,8 +5,8 @@ from physics import *
 
 data_writer = DataWriter("sim_data.csv")
 
-initial_cell_num = 200
-env_size = 400
+initial_cell_num = 100
+env_size = 500
 max_iteration = 20
 sim_iteration = 0
 cells = []
@@ -17,7 +17,7 @@ cells = []
 
 for i in range(initial_cell_num):
     pos = np.random.uniform(20, env_size * 0.9, [3])
-    cells.append(GenericCell(id=i, pos=pos))
+    cells.append(GenericCell(id=i, pos=pos, env_size=env_size))
 
 max_cell_radius = GenericCell.SEED_RADIUS * 1.259921
 if int(env_size / (max_cell_radius * 4)) < 3:
