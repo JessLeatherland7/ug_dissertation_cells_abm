@@ -11,7 +11,7 @@ from data import DataReader
 
 class Visualiser:
     
-    cell_colours = {"GenericCell": {"Normal": (0.6, 0.2, 0.2), "Quiescent": (0.8, 0.5, 0.5)}}
+    cell_colours = {"GenericCell": {"Normal": (0.6, 0.2, 0.2), "Quiescent": (0.7, 0.5, 0.5)}}
     
     # define 12 edges for the environment border
     env_edges = (

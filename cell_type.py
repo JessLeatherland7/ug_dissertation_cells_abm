@@ -23,9 +23,10 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     MEAN_CYC_LEN: float
     STD_DEV_CYC_LEN: float
 
-    def __init__(self, id, pos, env_size):
+    def __init__(self, sim, id, pos):
         self.id = id
-        self.cell_body = CellBody(pos, self.SEED_RADIUS, env_size)
+        self.sim = sim
+        self.cell_body = CellBody(pos, self.SEED_RADIUS, sim.env_size)
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.is_dead = False
@@ -35,11 +36,11 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
         self.growth_rate = self.get_growth_rate()
 
     def get_cyc_len(self):
-        return int(np.random.normal(loc=self.MEAN_CYC_LEN, scale=self.STD_DEV_CYC_LEN, size=1))
+        return max(2, int(np.random.normal(loc=self.MEAN_CYC_LEN, scale=self.STD_DEV_CYC_LEN, size=1)))
     
     def get_g1_len(self):
         g1_len_mean = self.cyc_len / 2.0
-        return int(np.random.normal(loc=g1_len_mean, scale=g1_len_mean/10.0, size=1))
+        return max(1, int(np.random.normal(loc=g1_len_mean, scale=g1_len_mean/10.0, size=1)))
     
     def get_growth_rate(self):
         # radius growth rate required to double volume in G1
@@ -92,12 +93,12 @@ class GenericCell(AbstractCellType):
     MEAN_CYC_LEN = 24.0
     STD_DEV_CYC_LEN = 1.0
     
-    LIFESPAN = 3
+    LIFESPAN = 40
     G0_OXY_THRESHOLD = 0.5
     HYPOXIA_THRESHOLD = 0.25
 
-    def __init__(self, id, pos, env_size):
-        super().__init__(id, pos, env_size)
+    def __init__(self, sim, id, pos):
+        super().__init__(sim, id, pos)
         self.current_age = 0
     
     def do_cell_cycle(self):
@@ -142,6 +143,10 @@ class GenericCell(AbstractCellType):
     def m_phase(self):
         self.cell_body.set_radius(self.SEED_RADIUS)
         # !!!! seed new cell where there is space
+        direction = np.random.uniform(-1, 1, [3])
+        new_cell_pos = self.cell_body.pos + (direction / np.linalg.norm(direction)) * (self.SEED_RADIUS * 2.0)
+        new_cell_pos = np.clip(new_cell_pos, self.SEED_RADIUS, self.sim.env_size - self.SEED_RADIUS)
+        self.sim.seed_new_cell(GenericCell, new_cell_pos)
         self.current_age += 1
         if self.current_age >= self.LIFESPAN:
             self.is_dead = True
