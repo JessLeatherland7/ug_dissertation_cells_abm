@@ -1,15 +1,13 @@
-import pygame
-from pygame.locals import *
+from PySide6.QtOpenGLWidgets import QOpenGLWidget
+from PySide6.QtGui import QOpenGLContext
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-import math
-
 from data import DataReader
 
-class Visualiser:
+class Visualiser(QOpenGLWidget):
     
     cell_colours = {"GenericCell": {"Normal": (0.6, 0.2, 0.2), "Quiescent": (0.7, 0.5, 0.5)}}
     
@@ -20,16 +18,44 @@ class Visualiser:
         (0,4), (1,5), (2,6), (3,7)
     )
 
-    def __init__(self, input_file, max_iteration, env_size):
-        self.max_iteration = max_iteration
+    def __init__(self, parent):
+        self.parent = parent
+        super().__init__(parent)
+
+
+    def ready_visualisation(self, input_file, env_size, w, h):
         self.env_size = env_size
-        
         self.env_origin, self.z_near, self.z_far, self.env_vertices = self.get_env_coords()
 
         self.data_reader = DataReader(input_file)
         self.data_reader.read_data()
 
-    
+        self.iteration = 0
+
+        f = QOpenGLContext.currentContext().functions()
+        f.glEnable(GL_DEPTH_TEST)
+        f.glDepthFunc(GL_LEQUAL)
+
+        f.glEnable(GL_LIGHTING)
+
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.8, 0.8, 0.8, 1.0])
+
+        # Enable light number 0
+        f.glEnable(GL_LIGHT0)
+
+        # Set position and intensity of light
+        glLightfv(GL_LIGHT0, GL_POSITION, [self.env_size, self.env_size, self.z_near + 2 * self.env_size, 1.0])
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.7, 0.7, 0.7, 1.0])
+
+        glMatrixMode(GL_PROJECTION)
+        gluPerspective(20, (w/h), -self.z_near, -self.z_far * 1.05)
+
+        glMatrixMode(GL_MODELVIEW)
+        gluLookAt(0, 0, 0, 0, 0, -100, 0, 0, 0)
+        viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glLoadIdentity()
+
+
     def get_env_coords(self):
         tan_10_degrees = 0.176327
         half_env_size = self.env_size / 2.0
@@ -52,8 +78,8 @@ class Visualiser:
         return env_origin, z_near, z_far, env_vertices
 
 
-    def get_vis_data(self, iteration):
-        cells = self.data_reader.get_iteration(iteration)
+    def get_vis_data(self):
+        cells = self.data_reader.get_iteration(self.iteration)
         
         positions = []
         radii = []
@@ -70,28 +96,64 @@ class Visualiser:
                     colours.append(self.cell_colours[cell["cell_type"]]["Normal"])
         
         return positions, radii, colours
-    
-
-    def draw_environment_border(self):
-        glDisable(GL_LIGHTING)
-
-        glBegin(GL_LINES)
-        glColor4f(0.4, 0.4, 0.4, 1)
-        for edge in self.env_edges:
-            for vertex in edge:
-                glVertex3fv(self.env_vertices[vertex])
-        glEnd()
 
 
-    def display_iteration(self, iteration):
+    def set_iteration(self, iteration):
+        self.iteration = iteration
+
+
+    def initializeGL(self):
+        print("init")
+        self.env_size = 100
+        self.env_origin, self.z_near, self.z_far, self.env_vertices = self.get_env_coords()
+
+        self.data_reader = DataReader("sim_data.csv")
+        self.data_reader.read_data()
+
+        self.iteration = 0
+
+        f = QOpenGLContext.currentContext().functions()
+        f.glEnable(GL_DEPTH_TEST)
+        f.glDepthFunc(GL_LEQUAL)
+
+        f.glEnable(GL_LIGHTING)
+
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.8, 0.8, 0.8, 1.0])
+
+        # Enable light number 0
+        f.glEnable(GL_LIGHT0)
+
+        # Set position and intensity of light
+        glLightfv(GL_LIGHT0, GL_POSITION, [self.env_size, self.env_size, self.z_near + 2 * self.env_size, 1.0])
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.7, 0.7, 0.7, 1.0])
+
+        # Setup the cell material
+        f.glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE)
+        glShadeModel(GL_SMOOTH)
         
-        positions, radii, colours = self.get_vis_data(iteration)
 
-        glEnable(GL_LIGHTING)
+    def resizeGL(self, w, h):
+        print("resize")
+        glMatrixMode(GL_PROJECTION)
+        gluPerspective(20, (w/h), -self.z_near, -self.z_far * 1.05)
 
-        glClearColor(1, 1, 1, 1)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) #Clear the screen
+        glMatrixMode(GL_MODELVIEW)
+        gluLookAt(0, 0, 0, 0, 0, -100, 0, 0, 0)
+        viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+        glLoadIdentity()
 
+
+    def paintGL(self):
+        f = QOpenGLContext.currentContext().functions()
+        f.glClearColor(1, 1, 1, 1)
+        f.glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) #Clear the screen
+
+        print("paint", self.iteration)      
+        f.glEnable(GL_LIGHTING)
+
+        positions, radii, colours = self.get_vis_data()
+        
         for i in range(len(radii)):
             pos = positions[i]
             colour = colours[i]
@@ -106,94 +168,13 @@ class Visualiser:
             
             glPopMatrix()
         
-        self.draw_environment_border()
+        # Draw environment border
+        f.glDisable(GL_LIGHTING)
 
-        pygame.display.flip() #Update the screen
-
-    def visualise(self):
-        pygame.init()
-        display = (900, 900)
-        screen = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-
-        glEnable(GL_DEPTH_TEST)
-        glDepthFunc(GL_LEQUAL)
-
-        glEnable(GL_LIGHTING)
-
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.8, 0.8, 0.8, 1.0])
-
-        # Enable light number 0
-        glEnable(GL_LIGHT0)
-
-        # Set position and intensity of light
-        glLightfv(GL_LIGHT0, GL_POSITION, [self.env_size, self.env_size, self.z_near + 2 * self.env_size, 1.0])
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.7, 0.7, 0.7, 1.0])
-
-        # Setup the cell material
-        glEnable(GL_COLOR_MATERIAL)
-        glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE)
-        glShadeModel(GL_SMOOTH)
-
-        glMatrixMode(GL_PROJECTION)
-        gluPerspective(20, (display[0]/display[1]), -self.z_near, -self.z_far * 1.05)
-
-        glMatrixMode(GL_MODELVIEW)
-        gluLookAt(0, 0, 0, 0, 0, -100, 0, 0, 0)
-        viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-        glLoadIdentity()
-
-        iteration = 0
-        run = True
-        
-        self.display_iteration(iteration)
-
-        while run:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
-                        run = False 
-                    elif event.key == pygame.K_LEFT and iteration > 0:
-                        iteration -= 1
-                        print(iteration)
-                        self.display_iteration(iteration)
-                    elif event.key == pygame.K_RIGHT and iteration < self.max_iteration:
-                        iteration += 1
-                        print(iteration)
-                        self.display_iteration(iteration)
-
-            # ====== Camera movement ======
-            
-            #keypress = pygame.key.get_pressed()
-
-            # init model view matrix
-            #glLoadIdentity()
-
-            # init the view matrix
-            #glPushMatrix()
-            #glLoadIdentity()
-
-            # apply the movment 
-            #if keypress[pygame.K_w]:
-            #    glTranslatef(0,0,0.1)
-            #if keypress[pygame.K_s]:
-            #    glTranslatef(0,0,-0.1)
-            #if keypress[pygame.K_d]:
-            #    glTranslatef(-0.1,0,0)
-            #if keypress[pygame.K_a]:
-            #    glTranslatef(0.1,0,0)
-
-            # multiply the current matrix by the get the new view matrix and store the final view matrix 
-            #glMultMatrixf(viewMatrix)
-            #viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
-
-            # apply view matrix
-            #glPopMatrix()
-            #glMultMatrixf(viewMatrix)
-                        
-            # =============================
-            
-            pygame.time.wait(10)
-
-        pygame.quit()
+        glBegin(GL_LINES)
+        glColor4f(0.4, 0.4, 0.4, 1)
+        for edge in self.env_edges:
+            for vertex in edge:
+                glVertex3fv(self.env_vertices[vertex])
+        glEnd()
+    

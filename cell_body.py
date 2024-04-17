@@ -2,10 +2,11 @@ import numpy as np
 
 class CellBody:
     
-    def __init__(self, pos, seed_radius, env_size):
+    def __init__(self, sim, pos, seed_radius):
         self.pos = pos
         self.radius = seed_radius
-        self.env_size = env_size
+        self.sim = sim
+        self.env_size = sim.env_size
         self.contact_inhibited = False
     
     def set_radius(self, radius):
@@ -18,5 +19,5 @@ class CellBody:
         self.pos = np.clip(self.pos + vel, self.radius, self.env_size - self.radius)
 
     def get_substance_level(self, substance):
-        # !!!! implement
-        return 1
+        env_layer = self.sim.get_env_layer(substance)
+        return env_layer.get_level_at_pos(self.pos)

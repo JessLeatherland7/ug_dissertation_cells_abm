@@ -3,22 +3,7 @@ import numpy as np
 
 from cell_body import CellBody
 
-class CellTypeAttributesMeta(ABCMeta):
-    cell_type_attributes = [
-        'SEED_RADIUS', 
-        'MEAN_CYC_LEN', 
-        'STD_DEV_CYC_LEN'
-    ]
-
-    def __call__(cls, *args, **kwargs):
-        instance = super().__call__(*args, **kwargs)
-        for attr in cls.cell_type_attributes:
-            if not hasattr(instance, attr):
-                raise NotImplementedError(f"Missing required class attribute: {attr}")
-        return instance
-    
-
-class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
+class AbstractCellType(ABC, metaclass=ABCMeta):
     SEED_RADIUS: float
     MEAN_CYC_LEN: float
     STD_DEV_CYC_LEN: float
@@ -26,7 +11,7 @@ class AbstractCellType(ABC, metaclass=CellTypeAttributesMeta):
     def __init__(self, sim, id, pos):
         self.id = id
         self.sim = sim
-        self.cell_body = CellBody(pos, self.SEED_RADIUS, sim.env_size)
+        self.cell_body = CellBody(sim, pos, self.SEED_RADIUS)
         self.current_phase = "G1"
         self.current_cyc_iteration = 0
         self.is_dead = False

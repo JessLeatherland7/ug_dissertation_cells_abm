@@ -123,7 +123,7 @@ class NewPhysicalModel:
     LAMBDA = 0.125
     TARGET_SEPARATION = 0.125
     MAX_ITERATIONS = 100
-    MIN_STABLE_OVERLAP_CUTOFF = 1.0
+    MIN_STABLE_OVERLAP_CUTOFF = 5.0
     MIN_STABLE_OVERLAP_DIFF = 0.025
 
     def __init__(self, env_size):
