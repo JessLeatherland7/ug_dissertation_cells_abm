@@ -29,7 +29,7 @@ class DataReader:
         for row in csvreader:
             iteration = int(row[0])
             cell_dict = {"id": int(row[1]), "is_dead": row[2] == "True", "cell_type": row[3], 
-                         "current_phase": row[4], "pos": eval(row[5]), "radius": float(row[6]), "contact_inhibited": row[7] == "True"}
+                         "current_phase": row[4], "pos": eval(row[5]), "radius": float(row[6])}
             if iteration in self.data:
                 self.data[iteration].append(cell_dict)
             else:

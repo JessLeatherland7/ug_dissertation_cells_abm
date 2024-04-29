@@ -21,3 +21,8 @@ class CellBody:
     def get_substance_level(self, substance):
         env_layer = self.sim.get_env_layer(substance)
         return env_layer.get_level_at_pos(self.pos)
+    
+    def get_num_border_contacts(self, extra_contact_radius=0.1):
+        border_contacts = (self.pos <= self.radius + extra_contact_radius).sum()
+        border_contacts += (self.pos >= self.env_size - self.radius - extra_contact_radius).sum()
+        return border_contacts

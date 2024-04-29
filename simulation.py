@@ -4,9 +4,9 @@ from data import DataWriter
 from visualiser import Visualiser
 from physics import *
 
-class Simulation:
-
-    def __init__(self, save_file, cell_types, initial_cell_nums, env_size, env_layers, max_iteration, random_seed=None):
+class Simulation():
+    
+    def __init__(self, save_file, cell_types, initial_cell_nums, env_size, env_layers, max_iteration, random_seed=None):        
         self.save_file = save_file
         self.data_writer = DataWriter(self.save_file)
         
@@ -38,25 +38,16 @@ class Simulation:
 
         max_cell_radius = GenericCell.SEED_RADIUS * 1.259921
         if int(self.env_size / (max_cell_radius * 4)) < 4:
-            self.physics_model = NewPhysicalModel(self.env_size)
+            self.physics_model = PhysicalModel(self.env_size)
         else:
-            self.physics_model = NewPhysicalModelWithLocals(self.env_size, max_cell_radius)
+            self.physics_model = PhysicalModelWithLocals(self.env_size, max_cell_radius)
 
-        for cell in self.cells:
-            cell.cell_body.contact_inhibited = False
+        total_overlap = self.physics_model.solve_overlap(self.cells)
 
-        total_overlap, overlapping_cells = self.physics_model.solve_overlap(self.cells)
-
-        if total_overlap > 0:
-            print(self.sim_iteration, total_overlap)
-
-        for cell_pair in overlapping_cells:
-            cell_pair[0].cell_body.contact_inhibited = True
-            cell_pair[1].cell_body.contact_inhibited = True
+        #if total_overlap > 0:
+        #    print(self.sim_iteration, total_overlap)
 
         self.data_writer.save_iteration(self.sim_iteration, self.cells)
-
-        self.sim_iteration += 1
 
 
     def seed_new_cell(self, cell_type, pos):
@@ -76,30 +67,24 @@ class Simulation:
         return None
 
 
-    def run_sim(self):
-        while self.sim_iteration <= self.max_iteration:
-            for cell in self.cells:
-                cell.cell_body.contact_inhibited = False
+    def run_iteration(self):
+        self.sim_iteration += 1
 
-            for cell in self.cells:
-                if not cell.is_dead:
-                    cell.do_cell_cycle()
-                    cell.migrate()
-                    cell.type_specific_processes()
-            
-            self.add_buffer_cells()
-            
-            total_overlap, overlapping_cells = self.physics_model.solve_overlap(self.cells)
+        for cell in self.cells:
+            if not cell.is_dead:
+                cell.do_cell_cycle()
+                cell.migrate()
+                cell.type_specific_processes()
+        
+        self.add_buffer_cells()
+        
+        total_overlap = self.physics_model.solve_overlap(self.cells)
 
-            if total_overlap > 0:
-                print(self.sim_iteration, total_overlap)
-            
-            for cell_pair in overlapping_cells:
-                cell_pair[0].cell_body.contact_inhibited = True
-                cell_pair[1].cell_body.contact_inhibited = True
-            
-            self.data_writer.save_iteration(self.sim_iteration, self.cells)
+        #if total_overlap > 0:
+        #    print(self.sim_iteration, total_overlap)
+        
+        self.data_writer.save_iteration(self.sim_iteration, self.cells)
+        
 
-            self.sim_iteration += 1
-
+    def write_simulation(self):
         self.data_writer.write_data()
