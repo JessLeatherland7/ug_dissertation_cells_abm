@@ -97,15 +97,15 @@ class GenericCell(AbstractCellType):
             self.m_phase()
 
     def g1_phase(self):
-        self.current_cyc_iteration += 1
-        
-        self.cell_body.grow_radius(self.growth_rate)
-        
         if self.current_cyc_iteration == self.g1_len:
             if self.cell_body.get_substance_level("oxygen") < self.G0_OXY_THRESHOLD or self.cell_body.contact_inhibited:
                 self.current_phase = "G0"
             else:
                 self.current_phase = "S"
+        else:
+            self.cell_body.grow_radius(self.growth_rate)
+        
+        self.current_cyc_iteration += 1
 
     def g0_phase(self):
         if not self.cell_body.contact_inhibited and self.cell_body.get_substance_level("oxygen") > self.G0_OXY_THRESHOLD:
@@ -115,12 +115,13 @@ class GenericCell(AbstractCellType):
                 self.current_phase = "M"
 
     def s_phase(self):
-        self.current_cyc_iteration += 1
         if self.current_cyc_iteration == self.cyc_len - 1:
             if self.cell_body.get_substance_level("oxygen") < self.G0_OXY_THRESHOLD or self.cell_body.contact_inhibited:
                 self.current_phase = "G0"
             else:
                 self.current_phase = "M"
+        
+        self.current_cyc_iteration += 1
 
     def g2_phase(self):
         pass

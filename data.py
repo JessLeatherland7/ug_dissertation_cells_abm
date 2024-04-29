@@ -8,7 +8,7 @@ class DataWriter:
 
     def save_iteration(self, iteration_num, cells):
         for cell in cells:
-            self.data += f"{iteration_num}\t{cell.id}\t{cell.is_dead}\t{type(cell).__name__}\t{cell.current_phase}\t{(cell.cell_body.pos.tolist())}\t{cell.cell_body.radius}\t{cell.cell_body.contact_inhibited}\n"
+            self.data += f"{iteration_num}\t{cell.id}\t{cell.is_dead}\t{type(cell).__name__}\t{cell.current_phase}\t{(cell.cell_body.pos.tolist())}\t{cell.cell_body.radius}\n"
 
     def write_data(self):
         with open(self.output_file, "w") as f:

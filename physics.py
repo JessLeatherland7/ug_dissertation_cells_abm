@@ -100,6 +100,8 @@ class PhysicalModel:
             cell_body = cells[i].cell_body
             if i in cell_forces_dict and len(cell_forces_dict[i]) + cell_body.get_num_border_contacts() >= self.MIN_CONTACTS_FOR_INHIBITION:
                 cell_body.contact_inhibited = True
+            elif cell_body.get_num_border_contacts() >= self.MIN_CONTACTS_FOR_INHIBITION:
+                cell_body.contact_inhibited = True
             else:
                 cell_body.contact_inhibited = False
 
