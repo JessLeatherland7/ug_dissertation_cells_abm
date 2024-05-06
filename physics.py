@@ -2,33 +2,30 @@ import math
 import numpy as np
 
 class PhysicalModel:
+    MAX_ITERATIONS = 100
     FORCE_MULTIPLIER = 0.125
     TARGET_SEPARATION = 0.125
-    MAX_ITERATIONS = 100
     MIN_STABLE_OVERLAP_CUTOFF = 5.0
     MIN_STABLE_OVERLAP_DIFF = 0.025
     MIN_CONTACTS_FOR_INHIBITION = 6
-    CONTACT_INHIBITION_RADIUS = 1
+    CONTACT_INHIBITION_RADIUS = 0.5
 
     def __init__(self, env_size):
         self.env_size = env_size
     
-    def solve_overlap(self, cells):
+    def solve_overlap(self, sim_iteration, cells):
         solve_iteration = 0
         previous_overlap = self.MIN_STABLE_OVERLAP_DIFF + 1
         current_overlap = 0
 
-        while solve_iteration < self.MAX_ITERATIONS and not (abs(previous_overlap - current_overlap) < self.MIN_STABLE_OVERLAP_DIFF and current_overlap > self.MIN_STABLE_OVERLAP_CUTOFF):
+        while solve_iteration < self.MAX_ITERATIONS:
 
             previous_overlap = current_overlap
             
             current_overlap, cell_forces_dict = self.get_total_overlap_and_forces(cells)
 
-            if not current_overlap:
-                #print("finished", solve_iteration)
+            if not current_overlap or self.overlap_stabilised(previous_overlap, current_overlap):
                 break
-            #elif (abs(previous_overlap - current_overlap) < self.MIN_STABLE_OVERLAP_DIFF and current_overlap > self.MIN_STABLE_OVERLAP_CUTOFF):
-                #print("minimised", solve_iteration, previous_overlap, current_overlap)
             else:
                 for i, force_list in cell_forces_dict.items():
                     cells[i].cell_body.apply_vel(self.FORCE_MULTIPLIER * np.sum(force_list, axis=0))
@@ -38,10 +35,17 @@ class PhysicalModel:
         total_overlap, cell_forces_dict = self.get_total_overlap_and_forces(cells, extra_overlap_radius=self.CONTACT_INHIBITION_RADIUS)
         self.set_contact_inhibited_flags(cells, cell_forces_dict)
 
-        return total_overlap
+        # ====== Uncomment to track overlap ======
+        #total_overlap, _ = self.get_total_overlap_and_forces(cells)
+        #if total_overlap > 0:
+        #    print("Iteration:", sim_iteration, "  Overlap:", total_overlap)
     
 
-    def get_overlap_and_force(self, cell_i_pos, cell_i_radius, cell_j_pos, cell_j_radius, extra_overlap_radius):
+    def overlap_stabilised(self, previous_overlap, current_overlap):
+        return abs(previous_overlap - current_overlap) < self.MIN_STABLE_OVERLAP_DIFF and current_overlap > self.MIN_STABLE_OVERLAP_CUTOFF
+    
+
+    def get_overlap_and_force(self, cell_i_pos, cell_i_radius, cell_j_pos, cell_j_radius, extra_overlap_radius=0):
         diff_vector = (cell_i_pos - cell_j_pos)
         dist = np.linalg.norm(diff_vector)
         

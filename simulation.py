@@ -27,28 +27,28 @@ class Simulation():
         self.sim_iteration = 0
         self.cells = []
         self.new_cell_buffer = []
-
+        
         for i in range(len(self.cell_types)):
             cell_type = self.cell_types[i]
             for j in range(self.initial_cell_nums[i]):
-                pos = np.random.uniform(10, self.env_size - 10, [3])
+                pos = np.random.uniform(cell_type.SEED_RADIUS, self.env_size - cell_type.SEED_RADIUS, [3])
                 self.seed_new_cell(cell_type, pos)
 
         self.add_buffer_cells()
 
-        max_cell_radius = GenericCell.SEED_RADIUS * 1.259921
-        if int(self.env_size / (max_cell_radius * 4)) < 4:
+        max_cell_radius = self.get_max_cell_radius()
+        if int(self.env_size / (max_cell_radius * 4)) < 3:
             self.physics_model = PhysicalModel(self.env_size)
         else:
             self.physics_model = PhysicalModelWithLocals(self.env_size, max_cell_radius)
 
-        total_overlap = self.physics_model.solve_overlap(self.cells)
-
-        #if total_overlap > 0:
-        #    print(self.sim_iteration, total_overlap)
+        self.physics_model.solve_overlap(self.sim_iteration, self.cells)
 
         self.data_writer.save_iteration(self.sim_iteration, self.cells)
 
+    def get_max_cell_radius(self):
+        max_cell_seed_radius = max([cell_type.SEED_RADIUS for cell_type in self.cell_types])
+        return max_cell_seed_radius * 1.259921
 
     def seed_new_cell(self, cell_type, pos):
         new_cell_id = len(self.cells) + len(self.new_cell_buffer)
@@ -78,10 +78,7 @@ class Simulation():
         
         self.add_buffer_cells()
         
-        total_overlap = self.physics_model.solve_overlap(self.cells)
-
-        #if total_overlap > 0:
-        #    print(self.sim_iteration, total_overlap)
+        self.physics_model.solve_overlap(self.sim_iteration, self.cells)
         
         self.data_writer.save_iteration(self.sim_iteration, self.cells)
         

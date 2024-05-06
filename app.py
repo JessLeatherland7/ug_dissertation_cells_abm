@@ -11,6 +11,8 @@ from simulation import Simulation
 from visualiser import Visualiser
 from graphs import *
 
+import yappi
+
 class MainWindow(QMainWindow):
 
     def __init__(self):
@@ -48,7 +50,7 @@ class MainWindow(QMainWindow):
         self.model_setup_title = QLabel("Model Setup:")
         self.model_setup_top_layout.addWidget(self.model_setup_title)
 
-        self.horizontal_spacer_1 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_1 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.model_setup_top_layout.addItem(self.horizontal_spacer_1)
 
         self.model_reset_button = QPushButton("Reset")
@@ -121,7 +123,7 @@ class MainWindow(QMainWindow):
         self.add_cell_type_button.clicked.connect(self.add_cell_type_widget)
         self.add_more_cell_types_layout.addWidget(self.add_cell_type_button)
 
-        self.horizontal_spacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.add_more_cell_types_layout.addItem(self.horizontal_spacer_3)
 
         self.cell_setup_layout.addWidget(self.add_more_cell_types_widget)
@@ -158,7 +160,7 @@ class MainWindow(QMainWindow):
         self.um_label = QLabel("μm")
         self.env_set_width_layout.addWidget(self.um_label)
 
-        self.horizontal_spacer_4 = QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_4 = QSpacerItem(20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.env_set_width_layout.addItem(self.horizontal_spacer_4)
 
         self.env_setup_layout.addLayout(self.env_set_width_layout)
@@ -181,7 +183,7 @@ class MainWindow(QMainWindow):
         self.add_substance_button.clicked.connect(self.add_substance_widget)
         self.add_more_substances_layout.addWidget(self.add_substance_button)
 
-        self.horizontal_spacer_6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_6 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.add_more_substances_layout.addItem(self.horizontal_spacer_6)
 
         self.env_setup_layout.addLayout(self.add_more_substances_layout)
@@ -219,7 +221,7 @@ class MainWindow(QMainWindow):
         self.sim_rand_seed_spin_box.setSingleStep(1)
         self.sim_iter_and_seed_layout.addWidget(self.sim_rand_seed_spin_box)
 
-        self.horizontal_spacer_7 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_7 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.sim_iter_and_seed_layout.addItem(self.horizontal_spacer_7)
 
         self.sim_setup_layout.addLayout(self.sim_iter_and_seed_layout)
@@ -265,7 +267,7 @@ class MainWindow(QMainWindow):
         self.playback_fps_spin_box.valueChanged.connect(self.change_fps)
         self.playback_fps_and_iter_layout.addWidget(self.playback_fps_spin_box)
 
-        self.horizontal_spacer_8 = QSpacerItem(20, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        self.horizontal_spacer_8 = QSpacerItem(20, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
         self.playback_fps_and_iter_layout.addItem(self.horizontal_spacer_8)
 
         self.playback_iter_label = QLabel("ITERATION:")
@@ -279,7 +281,7 @@ class MainWindow(QMainWindow):
         self.playback_iter_spin_box.valueChanged.connect(self.playback_iter_changed)
         self.playback_fps_and_iter_layout.addWidget(self.playback_iter_spin_box)
 
-        self.horizontal_spacer_9 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontal_spacer_9 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.playback_fps_and_iter_layout.addItem(self.horizontal_spacer_9)
 
         self.playback_layout.addLayout(self.playback_fps_and_iter_layout)
@@ -338,7 +340,7 @@ class MainWindow(QMainWindow):
         seed_cells_spin_box.setSingleStep(1)
         layout.addWidget(seed_cells_spin_box)
 
-        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         layout.addItem(horizontal_spacer)
 
         self.add_cell_type_layouts.append(layout)
@@ -347,6 +349,7 @@ class MainWindow(QMainWindow):
         self.add_initial_cells_layout.addWidget(widget)
         self.add_initial_cells_widget.setMinimumHeight(28 * len(self.add_cell_type_layouts))
         self.cell_setup_widget.setMinimumHeight(self.add_initial_cells_widget.height() + 52)
+
 
     def substance_changed(self, new_substance, substance_combo_box):
         spin_box_index = None
@@ -386,7 +389,7 @@ class MainWindow(QMainWindow):
         units_label = QLabel("units")
         layout.addWidget(units_label)
 
-        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         layout.addItem(horizontal_spacer)
 
         self.add_substance_layouts.append(layout)
@@ -498,6 +501,10 @@ class MainWindow(QMainWindow):
         self.playback_slider.setEnabled(False)
 
     def run_model(self, e):
+        # ====== Uncomment yappi lines for profiling ======
+        #yappi.set_clock_type("wall")
+        #yappi.start()
+
         self.timer.stop()
 
         self.reset_playback_iteration()
@@ -526,13 +533,13 @@ class MainWindow(QMainWindow):
         self.max_iteration = self.sim_iter_spin_box.value()
         random_seed = self.sim_rand_seed_spin_box.value()
         
-        self.sim = Simulation("sim_data.csv", input_cell_types, input_cell_nums, self.env_size, input_env_layers, self.max_iteration, random_seed)
-
         progress_dialog = QProgressDialog("Running simulation...", "Cancel", 0, self.max_iteration, self)
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.setWindowTitle("Run Model")
         progress_dialog.setMinimumDuration(0)
-        
+
+        self.sim = Simulation("sim_data.csv", input_cell_types, input_cell_nums, self.env_size, input_env_layers, self.max_iteration, random_seed)
+
         cancelled = False
         for i in range(1, self.max_iteration+1):
             if progress_dialog.wasCanceled():
@@ -545,7 +552,7 @@ class MainWindow(QMainWindow):
         if not cancelled:
             self.sim.write_simulation()
 
-            self.graph_canvas.plot_data()
+            self.graph_canvas.plot_data(input_cell_types)
             self.graph_canvas.draw()
 
             if self.visualiser != None:
@@ -569,6 +576,12 @@ class MainWindow(QMainWindow):
                 self.visualiser = None
             self.graph_canvas.clear()
             self.graph_canvas.draw()
+
+        # ====== Uncomment yappi lines for profiling ======
+        #yappi.stop()
+        #yappi.get_func_stats().print_all()
+        #yappi.get_thread_stats().print_all()
+        #yappi.clear_stats()
         
 
     def change_fps(self, new_fps):

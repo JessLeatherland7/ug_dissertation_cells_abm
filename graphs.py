@@ -17,36 +17,37 @@ class PopulationGraphCanvas(FigureCanvas):
         
         super(PopulationGraphCanvas, self).__init__(self.fig)
 
-    def get_population_data(self):
+    def get_population_data(self, cell_types):
         data_reader = DataReader(self.input_file)
         data_reader.read_data()
 
         iterations = []
+        
         population_data = {}
+        for cell_type in cell_types:
+            population_data[cell_type.__name__] = []
 
         for iteration, cell_dict_list in data_reader.data.items():
             iterations.append(iteration)
+            
             alive_cell_count = {}
+            for cell_type in cell_types:
+                alive_cell_count[cell_type.__name__] = 0
+
             for cell_dict in cell_dict_list:
                 if not cell_dict["is_dead"]:
                     cell_type = cell_dict["cell_type"]
-                    if cell_type in alive_cell_count:
-                        alive_cell_count[cell_type] += 1
-                    else:
-                        alive_cell_count[cell_type] = 1
+                    alive_cell_count[cell_type] += 1
             
             for cell_type in alive_cell_count:
-                if cell_type in population_data:
-                    population_data[cell_type].append(alive_cell_count[cell_type])
-                else:
-                    population_data[cell_type] = [alive_cell_count[cell_type]]
+                population_data[cell_type].append(alive_cell_count[cell_type])
         
         return iterations, population_data
 
-    def plot_data(self):
+    def plot_data(self, cell_types):
         self.clear()
         
-        iterations, population_data = self.get_population_data()
+        iterations, population_data = self.get_population_data(cell_types)
         for cell_type in population_data:
             self.axes.plot(iterations, population_data[cell_type], color=Visualiser.cell_colours[cell_type]["Normal"], label=cell_type)
         
