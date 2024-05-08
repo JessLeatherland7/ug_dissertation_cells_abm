@@ -1,5 +1,7 @@
 # cells_abm
 
+To run the application, run app.py
+
 To add a new cell type, do the following:
 1. Extend the AbstractCellType class in cell_type.py
 2. Define the class constants (SEED_RADIUS, MEAN_CYC_LEN and STD_DEV_CYC_LEN)
