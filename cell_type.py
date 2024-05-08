@@ -285,7 +285,7 @@ class GenericCell(AbstractCellType):
         half its radius in a random direction.
         """
         if not self.cell_body.contact_inhibited:
-            vel = utils.rand_unit_vec * (self.SEED_RADIUS / 2.0)
+            vel = utils.rand_unit_vec() * (self.SEED_RADIUS / 2.0)
             self.cell_body.apply_vel(vel)
 
     def type_specific_processes(self):

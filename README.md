@@ -1,5 +1,14 @@
 # cells_abm
 
+Install the following libraries with these pip commands:
+pip install glfw
+pip install matplotlib
+pip install numpy
+pip install opencv-python
+pip install PyOpenGL
+pip install PySide6
+pip install yappi
+
 To run the application, run app.py
 
 To add a new cell type, do the following:
