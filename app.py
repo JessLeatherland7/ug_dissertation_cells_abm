@@ -1,21 +1,29 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from PySide6.QtCore import QRect, QSize, Qt, QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import (QApplication, QProgressDialog, QFileDialog, QComboBox,
-    QDoubleSpinBox, QFrame, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea,
-    QMessageBox, QSizePolicy, QSlider, QSpacerItem, QSpinBox, QVBoxLayout, QWidget)
-
-from cell_type import *
-from environment import *
-from simulation import Simulation
-from visualiser import Visualiser
-from graphs import *
+from PySide6.QtWidgets import (QApplication, QProgressDialog, QFileDialog, 
+    QComboBox, QDoubleSpinBox, QFrame, QHBoxLayout, QLabel, QMainWindow,
+    QPushButton, QScrollArea, QMessageBox, QSizePolicy, QSlider, QSpacerItem, 
+    QSpinBox, QVBoxLayout, QWidget)
 
 import yappi
 
+from cell_type import *
+from environment import *
+from graphs import *
+from simulation import Simulation
+import utils
+from visualiser import Visualiser
+
 class MainWindow(QMainWindow):
 
+    SIM_DATA_FILE = "sim_data.csv"
+
     def __init__(self):
+        """Constructs the GUI."""
         super().__init__()
 
         self.setMinimumSize(QSize(1000, 700))
@@ -39,8 +47,9 @@ class MainWindow(QMainWindow):
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.export_video_action)
 
-        
     def init_model_setup_panel(self):
+        """Constructs the panel that the user sets up models from."""
+        
         self.model_setup_widget = QWidget(self.central_widget)
         self.model_setup_widget.setGeometry(QRect(10, 10, 400, 320))
         self.model_setup_layout = QVBoxLayout(self.model_setup_widget)
@@ -50,7 +59,8 @@ class MainWindow(QMainWindow):
         self.model_setup_title = QLabel("Model Setup:")
         self.model_setup_top_layout.addWidget(self.model_setup_title)
 
-        self.horizontal_spacer_1 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_1 = QSpacerItem(40, 20, 
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.model_setup_top_layout.addItem(self.horizontal_spacer_1)
 
         self.model_reset_button = QPushButton("Reset")
@@ -86,9 +96,11 @@ class MainWindow(QMainWindow):
 
         self.model_setup_layout.addWidget(self.model_setup_scroll_area)
 
-
     def init_cell_setup_widget(self):
-        self.cell_types = self.get_all_subclasses(AbstractCellType)
+        """Constructs the cell agent setup section of the model setup panel."""
+
+        # Gets all cell types that the user could add to the simulation
+        self.cell_types = utils.get_all_subclasses(AbstractCellType)
         self.cell_type_names = []
         for cell_type in self.cell_types:
             self.cell_type_names.append(cell_type.__name__)
@@ -123,16 +135,19 @@ class MainWindow(QMainWindow):
         self.add_cell_type_button.clicked.connect(self.add_cell_type_widget)
         self.add_more_cell_types_layout.addWidget(self.add_cell_type_button)
 
-        self.horizontal_spacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_3 = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.add_more_cell_types_layout.addItem(self.horizontal_spacer_3)
 
         self.cell_setup_layout.addWidget(self.add_more_cell_types_widget)
 
         self.scroll_area_layout.addWidget(self.cell_setup_widget)
 
-
     def init_env_setup_widget(self):
-        self.env_layers = self.get_all_subclasses(AbstractEnvironmentLayer)
+        """Constructs the environment setup section of the model setup panel."""
+
+        # Gets all substance layers that the user could add to the simulation
+        self.env_layers = utils.get_all_subclasses(AbstractEnvironmentLayer)
         self.env_layer_names = []
         for env_layer in self.env_layers:
             self.env_layer_names.append(env_layer.__name__)
@@ -143,7 +158,8 @@ class MainWindow(QMainWindow):
         self.env_setup_layout.setContentsMargins(0, 0, 0, 0)
         
         self.env_setup_title = QLabel("Environment:")
-        self.env_setup_title.setStyleSheet("border-top-width: 1px; border-top-style: solid; border-radius: 0px;")
+        self.env_setup_title.setStyleSheet(
+            "border-top-width: 1px; border-top-style: solid; border-radius: 0px;")
         self.env_setup_layout.addWidget(self.env_setup_title)
 
         self.env_set_width_layout = QHBoxLayout()
@@ -160,7 +176,8 @@ class MainWindow(QMainWindow):
         self.um_label = QLabel("μm")
         self.env_set_width_layout.addWidget(self.um_label)
 
-        self.horizontal_spacer_4 = QSpacerItem(20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_4 = QSpacerItem(
+            20, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.env_set_width_layout.addItem(self.horizontal_spacer_4)
 
         self.env_setup_layout.addLayout(self.env_set_width_layout)
@@ -183,22 +200,25 @@ class MainWindow(QMainWindow):
         self.add_substance_button.clicked.connect(self.add_substance_widget)
         self.add_more_substances_layout.addWidget(self.add_substance_button)
 
-        self.horizontal_spacer_6 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_6 = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.add_more_substances_layout.addItem(self.horizontal_spacer_6)
 
         self.env_setup_layout.addLayout(self.add_more_substances_layout)
 
         self.scroll_area_layout.addWidget(self.env_setup_widget)
 
-
     def init_sim_setup_widget(self):
+        """Constructs the simulation setup section of the model setup panel."""
+
         self.sim_setup_widget = QWidget(self.scroll_area_widget_contents)
         self.sim_setup_widget.setMinimumHeight(50)
         self.sim_setup_layout = QVBoxLayout(self.sim_setup_widget)
         self.sim_setup_layout.setContentsMargins(0, 0, 0, 0)
         
         self.sim_setup_title = QLabel("Simulation:")
-        self.sim_setup_title.setStyleSheet("border-top-width: 1px; border-top-style: solid; border-radius: 0px;")
+        self.sim_setup_title.setStyleSheet(
+            "border-top-width: 1px; border-top-style: solid; border-radius: 0px;")
         self.sim_setup_layout.addWidget(self.sim_setup_title)
 
         self.sim_iter_and_seed_layout = QHBoxLayout()
@@ -221,15 +241,17 @@ class MainWindow(QMainWindow):
         self.sim_rand_seed_spin_box.setSingleStep(1)
         self.sim_iter_and_seed_layout.addWidget(self.sim_rand_seed_spin_box)
 
-        self.horizontal_spacer_7 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_7 = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.sim_iter_and_seed_layout.addItem(self.horizontal_spacer_7)
 
         self.sim_setup_layout.addLayout(self.sim_iter_and_seed_layout)
 
         self.scroll_area_layout.addWidget(self.sim_setup_widget)
 
-
     def init_graphs_panel(self):
+        """Constructs the graphical output panel."""
+
         self.graphs_widget = QWidget(self.central_widget)
         self.graphs_widget.setGeometry(QRect(10, 340, 400, 300))
         self.graphs_layout = QVBoxLayout(self.graphs_widget)
@@ -243,13 +265,13 @@ class MainWindow(QMainWindow):
         self.hline_4.setFrameShadow(QFrame.Sunken)
         self.graphs_layout.addWidget(self.hline_4)
 
-        self.graph_canvas = PopulationGraphCanvas("sim_data.csv", self.graphs_widget)
-        self.graph_canvas.axes.cla()
-        self.graph_canvas.axes.set_axis_off()
+        self.graph_canvas = PopulationGraphCanvas(self.SIM_DATA_FILE, self.graphs_widget)
+        self.graph_canvas.clear()
         self.graphs_layout.addWidget(self.graph_canvas)
 
-
     def init_playback_panel(self):
+        """Constructs the visualisation playback panel."""
+
         self.playback_widget = QWidget(self.central_widget)
         self.playback_widget.setGeometry(QRect(430, 10, 560, 60))
         self.playback_layout = QVBoxLayout(self.playback_widget)
@@ -267,7 +289,8 @@ class MainWindow(QMainWindow):
         self.playback_fps_spin_box.valueChanged.connect(self.change_fps)
         self.playback_fps_and_iter_layout.addWidget(self.playback_fps_spin_box)
 
-        self.horizontal_spacer_8 = QSpacerItem(20, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_8 = QSpacerItem(
+            20, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
         self.playback_fps_and_iter_layout.addItem(self.horizontal_spacer_8)
 
         self.playback_iter_label = QLabel("ITERATION:")
@@ -281,7 +304,8 @@ class MainWindow(QMainWindow):
         self.playback_iter_spin_box.valueChanged.connect(self.playback_iter_changed)
         self.playback_fps_and_iter_layout.addWidget(self.playback_iter_spin_box)
 
-        self.horizontal_spacer_9 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontal_spacer_9 = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.playback_fps_and_iter_layout.addItem(self.horizontal_spacer_9)
 
         self.playback_layout.addLayout(self.playback_fps_and_iter_layout)
@@ -310,7 +334,7 @@ class MainWindow(QMainWindow):
         self.visualiser_layout.addWidget(self.visualiser)
 
         self.timer = QTimer(self)
-        self.timer.setInterval(1000/self.playback_fps_spin_box.value())   # period, in milliseconds
+        self.timer.setInterval(1000/self.playback_fps_spin_box.value())
         self.timer.timeout.connect(self.visualiser.update)
         self.timer.timeout.connect(self.play_next_iteration)
 
@@ -321,6 +345,9 @@ class MainWindow(QMainWindow):
         self.max_iteration = 0
 
     def add_cell_type_widget(self, e=None):
+        """Adds a widget to the cell setup section of the model setup panel
+        for an additional cell type.
+        """
         widget = QWidget()
         widget.setMinimumHeight(28)
         layout = QHBoxLayout()
@@ -336,11 +363,12 @@ class MainWindow(QMainWindow):
 
         seed_cells_spin_box = QSpinBox(self.cell_setup_widget)
         seed_cells_spin_box.setFixedWidth(75)
-        seed_cells_spin_box.setRange(1, 100)
+        seed_cells_spin_box.setRange(1, 10000)
         seed_cells_spin_box.setSingleStep(1)
         layout.addWidget(seed_cells_spin_box)
 
-        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        horizontal_spacer = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         layout.addItem(horizontal_spacer)
 
         self.add_cell_type_layouts.append(layout)
@@ -350,8 +378,11 @@ class MainWindow(QMainWindow):
         self.add_initial_cells_widget.setMinimumHeight(28 * len(self.add_cell_type_layouts))
         self.cell_setup_widget.setMinimumHeight(self.add_initial_cells_widget.height() + 52)
 
-
     def substance_changed(self, new_substance, substance_combo_box):
+        """When the substance in a substance dropdown is changed, sets the 
+        corresponding substance level spin box to disabled if the substance
+        is blank, otherwise enables the substance level spin box for editing.
+        """
         spin_box_index = None
         for i in range(len(self.substance_combo_boxes)):
             if substance_combo_box == self.substance_combo_boxes[i]:
@@ -367,6 +398,9 @@ class MainWindow(QMainWindow):
                 substance_level_double_spin_box.setEnabled(True)
 
     def add_substance_widget(self, e=None):
+        """Adds a widget to the environment setup section of the model setup panel
+        for an additional substance layer.
+        """
         widget = QWidget()
         widget.setMinimumHeight(28)
         layout = QHBoxLayout()
@@ -376,7 +410,8 @@ class MainWindow(QMainWindow):
         substance_combo_box = QComboBox(self.env_setup_widget)
         substance_combo_box.addItem("")
         substance_combo_box.addItems(self.env_layer_names)
-        substance_combo_box.currentTextChanged.connect(lambda e: self.substance_changed(e, substance_combo_box))
+        substance_combo_box.currentTextChanged.connect(
+            lambda e: self.substance_changed(e, substance_combo_box))
         layout.addWidget(substance_combo_box)
 
         substance_level_double_spin_box = QDoubleSpinBox(self.env_setup_widget)
@@ -389,7 +424,8 @@ class MainWindow(QMainWindow):
         units_label = QLabel("units")
         layout.addWidget(units_label)
 
-        horizontal_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        horizontal_spacer = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         layout.addItem(horizontal_spacer)
 
         self.add_substance_layouts.append(layout)
@@ -400,6 +436,8 @@ class MainWindow(QMainWindow):
         self.env_setup_widget.setMinimumHeight(self.add_substances_widget.height() + 82)
 
     def export_data(self, e):
+        """Exports the simulation data to the chosen file location."""
+
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         save_file_name, _ = QFileDialog.getSaveFileName(self, 
@@ -407,7 +445,7 @@ class MainWindow(QMainWindow):
         if save_file_name:
             if save_file_name[-4:] != ".csv":
                 save_file_name += ".csv"
-            with open("sim_data.csv", 'r') as data_file:
+            with open(self.SIM_DATA_FILE, 'r') as data_file:
                 with open(save_file_name, 'w') as save_file:
                     for line in data_file:
                         save_file.write(line)
@@ -415,6 +453,9 @@ class MainWindow(QMainWindow):
             save_file.close()
 
     def export_video(self, e):
+        """Exports a video of the simulation visualisation to the chosen
+        file location.
+        """
         if self.visualiser != None:
             options = QFileDialog.Options()
             options |= QFileDialog.DontUseNativeDialog
@@ -423,11 +464,21 @@ class MainWindow(QMainWindow):
             if save_file_name:
                 if save_file_name[-4:] != ".mp4":
                     save_file_name += ".mp4"
-                self.visualiser.save_video(save_file_name, self.max_iteration, self.playback_fps_spin_box.value())
+                fps = self.playback_fps_spin_box.value()
+                self.visualiser.save_video(save_file_name, self.max_iteration, fps)
+                                           
         else:
-            QMessageBox.critical(self, "Alert", "No visualisation to export!", buttons=QMessageBox.Ok)
+            QMessageBox.critical(
+                self, 
+                "Alert", 
+                "No visualisation to export!", 
+                buttons=QMessageBox.Ok
+            )
 
     def reset_model(self, e):
+        """Resets all of the panels, removing extra cell type and substance
+        layer widgets from the model setup panel if they have been added.
+        """
         self.timer.stop()
         
         if self.visualiser != None:
@@ -467,9 +518,9 @@ class MainWindow(QMainWindow):
             self.add_substances_widget.setMinimumHeight(28)
             self.env_setup_widget.setMinimumHeight(110)
 
-        first_substance_combo_box: QComboBox = self.substance_combo_boxes[0]
-        first_substance_level_double_spin_box: QSpinBox = self.substance_level_double_spin_boxes[0]
+        first_substance_combo_box = self.substance_combo_boxes[0]
         first_substance_combo_box.setCurrentText("")
+        first_substance_level_double_spin_box = self.substance_level_double_spin_boxes[0]
         first_substance_level_double_spin_box.setValue(0.0)
         first_substance_level_double_spin_box.setEnabled(False)
 
@@ -485,6 +536,7 @@ class MainWindow(QMainWindow):
         self.reset_playback_iteration()
     
     def remove_layout_widgets(self, layout):
+        """Removes widgets from a layout."""
         for i in reversed(range(layout.count())):
             widget = layout.itemAt(i).widget()
             if widget is not None:
@@ -492,6 +544,7 @@ class MainWindow(QMainWindow):
                 widget.setParent(None)
 
     def reset_playback_iteration(self):
+        """Resets the playback panel to the first iteration."""
         self.current_iteration = 0
         self.playback_iter_spin_box.setValue(0)
         self.playback_iter_spin_box.setEnabled(False)
@@ -501,6 +554,9 @@ class MainWindow(QMainWindow):
         self.playback_slider.setEnabled(False)
 
     def run_model(self, e):
+        """Runs a simulation with the user's chosen setup and produces the
+        graphs and visualisation for it when it has run.
+        """
         # ====== Uncomment yappi lines for profiling ======
         #yappi.set_clock_type("wall")
         #yappi.start()
@@ -527,18 +583,27 @@ class MainWindow(QMainWindow):
         for env_layer in self.env_layers:
             for i in range(len(self.substance_combo_boxes)):
                 if env_layer.__name__ == self.substance_combo_boxes[i].currentText():
-                    input_env_layers.append(env_layer(self.env_size, self.substance_level_double_spin_boxes[i].value()))
+                    substance_level = self.substance_level_double_spin_boxes[i].value()
+                    input_env_layers.append(env_layer(self.env_size, substance_level))
                     break
 
         self.max_iteration = self.sim_iter_spin_box.value()
         random_seed = self.sim_rand_seed_spin_box.value()
         
-        progress_dialog = QProgressDialog("Running simulation...", "Cancel", 0, self.max_iteration, self)
+        progress_dialog = QProgressDialog(
+            "Running simulation...", 
+            "Cancel", 
+            0, 
+            self.max_iteration, 
+            self
+        )
+
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.setWindowTitle("Run Model")
         progress_dialog.setMinimumDuration(0)
 
-        self.sim = Simulation("sim_data.csv", input_cell_types, input_cell_nums, self.env_size, input_env_layers, self.max_iteration, random_seed)
+        self.sim = Simulation(self.SIM_DATA_FILE, input_cell_types, input_cell_nums, 
+                              self.env_size, input_env_layers, self.max_iteration, random_seed)
 
         cancelled = False
         for i in range(1, self.max_iteration+1):
@@ -560,7 +625,8 @@ class MainWindow(QMainWindow):
                 self.visualiser = None
 
             width, height = self.visualiser_widget.width(), self.visualiser_widget.height()
-            self.visualiser = Visualiser(self.visualiser_widget, width, height, "sim_data.csv", self.env_size)
+            self.visualiser = Visualiser(self.visualiser_widget, width, height, 
+                                         self.SIM_DATA_FILE, self.env_size)
             self.visualiser_layout.addWidget(self.visualiser)
             
             self.playback_iter_spin_box.setRange(0, self.max_iteration)
@@ -585,16 +651,21 @@ class MainWindow(QMainWindow):
         
 
     def change_fps(self, new_fps):
+        """Change the fps of the visualisation playback."""
         if self.timer != None:
             self.timer.setInterval(1000/new_fps)
 
     def playback_iter_changed(self):
+        """Sets the iteration to what the user has chosen in the iteration 
+        spin box and updates the visualiser.
+        """
         if not self.playing:
             self.current_iteration = self.playback_iter_spin_box.value()
             self.playback_slider.setValue(self.current_iteration)
             self.update_visualiser()
 
     def play_pause(self, e):
+        """Toggles between playing and pausing the visualisation."""
         if not self.playing:
             if self.current_iteration == self.max_iteration:
                 self.current_iteration = 0
@@ -612,12 +683,17 @@ class MainWindow(QMainWindow):
             self.playing = False
 
     def playback_slider_changed(self):
+        """Sets the iteration to what the user has set the playback slider
+        to and updates the visualiser.
+        """
         if not self.playing:
             self.current_iteration = self.playback_slider.value()
             self.playback_iter_spin_box.setValue(self.current_iteration)
             self.update_visualiser()
     
     def play_next_iteration(self):
+        """Increments the current visualised iteration, and stops the playback
+        if it has reached the end"""
         self.current_iteration += 1
         if self.current_iteration > self.max_iteration:
             self.current_iteration = self.max_iteration
@@ -631,29 +707,21 @@ class MainWindow(QMainWindow):
             self.update_visualiser()
     
     def set_playback_iter_and_slider(self):
+        """Set the value of the playback iteration spin box and slider to
+        the current visualised iteration.
+        """
         self.playback_iter_spin_box.setValue(self.current_iteration)
         self.playback_slider.setValue(self.current_iteration)
     
     def update_visualiser(self):
+        """Update the visualiser to display the current iteration."""
         if self.visualiser != None:
             self.visualiser.set_iteration(self.current_iteration)
             self.visualiser.update()
 
-    def get_all_subclasses(self, parent_class):
-        subclasses = []
-        classes_to_check = [parent_class]
-        while classes_to_check:
-            parent = classes_to_check.pop()
-            for child in parent.__subclasses__():
-                if child not in subclasses:
-                    subclasses.append(child)
-                    classes_to_check.append(child)
-        return subclasses
 
-
+# Run the application
 app = QApplication([])
-
 window = MainWindow()
 window.show()
-
 app.exec()
