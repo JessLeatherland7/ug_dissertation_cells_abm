@@ -4,7 +4,7 @@ This is my UG dissertation project for my BSc Computer Science (AI) degree at th
 
 Referee: Dr Dawn Walker - d.c.walker@sheffield.ac.uk
 
-## Intstructions for using the project
+## Instructions for using the project
 
 Install the following libraries with these pip commands:
 - pip install glfw
@@ -28,3 +28,7 @@ To add a new substance layer, do the following:
 1. Extend the AbstractEnvironmentLayer class in environment.py
 2. Define the constant for the name of the substance (SUBSTANCE_NAME)
 3. Define the get_level_at_pos() function, making sure it returns a float for the substance level at the given position
+
+## GUI
+
+<img width="761" alt="gui_result" src="https://github.com/JessLeatherland7/ug_dissertation_cells_abm/assets/66838008/cb670716-ec28-4fd1-a428-a49ac56917fa">
